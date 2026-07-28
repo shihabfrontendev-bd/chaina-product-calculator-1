@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaaS Price Calculator Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+
+  <nav class="sidebar">
+    <div class="logo">📦 <span>SaaS Calc</span></div>
+    <ul class="nav-links">
+      <li class="active" data-tab="tab-dashboard">📊 Dashboard</li>
+      <li data-tab="tab-calculator">🧮 Calculator</li>
+      <li data-tab="tab-reverse">🔄 Reverse Calc</li>
+      <li data-tab="tab-database">💾 Database</li>
+      <li data-tab="tab-settings">⚙️ Settings</li>
+    </ul>
+    <div class="sidebar-footer">
+      <button id="themeToggleBtn">🌓 Toggle Theme</button>
+    </div>
+  </nav>
+
+  <main class="content-area">
+    <!-- DASHBOARD TAB -->
+    <section id="tab-dashboard" class="tab-content active">
+      <header class="top-bar">
+        <h1>📊 Executive Dashboard</h1>
+        <div class="header-actions">
+          <span id="businessNameDisplay">My Import Store</span>
+        </div>
+      </header>
+
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <p>Landing Cost</p>
+          <h2 id="dashLanding">৳0.00</h2>
+          <span class="badge" id="dashShipPct">Ship: 0%</span>
+        </div>
+        <div class="card stat-card">
+          <p>Selling Price</p>
+          <h2 id="dashSelling">৳0.00</h2>
+          <span class="badge success">Target</span>
+        </div>
+        <div class="card stat-card">
+          <p>Net Profit</p>
+          <h2 id="dashProfit" class="text-success">৳0.00</h2>
+          <span class="badge" id="dashMargin">Margin: 0%</span>
+        </div>
+        <div class="card stat-card">
+          <p>FB Ads Spend</p>
+          <h2 id="dashAds">৳0.00</h2>
+          <span class="badge alert" id="dashAdsPct">Ads: 0%</span>
+        </div>
+      </div>
+
+      <div class="dashboard-body">
+        <div class="card chart-card">
+          <h3>💰 Cost Breakdown Pie Chart</h3>
+          <div class="canvas-wrapper">
+            <canvas id="costChart" width="300" height="300"></canvas>
+            <div id="chartLegend" class="legend"></div>
+          </div>
+        </div>
+        <div class="card recent-card">
+          <h3>📦 Active Product Overview</h3>
+          <div id="activeProductPreview" class="preview-box empty">
+            <p>No product loaded. Use the extension to import data or enter manually!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALCULATOR TAB -->
+    <section id="tab-calculator" class="tab-content">
+      <header class="top-bar">
+        <h1>🧮 Product Price Calculator</h1>
+        <button id="btnResetCalc" class="btn outline small">🔄 Reset Form</button>
+      </header>
+
+      <div class="calc-grid">
+        <div class="card input-col">
+          <h3>1. Product Details</h3>
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="calcName" placeholder="e.g. Mechanical Keyboard">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>China Price (RMB/USD)</label>
+              <input type="number" id="calcPrice" value="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Weight (Grams)</label>
+              <input type="number" id="calcWeight" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Product URL / Image Link</label>
+            <input type="text" id="calcImage" placeholder="https://...">
+          </div>
+
+          <h3>2. Shipping Method</h3>
+          <div class="shipping-toggle">
+            <label class="radio-label">
+              <input type="radio" name="shipMethod" value="air" checked> ✈️ Air Shipping
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="shipMethod" value="sea"> 🚢 Sea Shipping
+            </label>
+          </div>
+          <small class="text-muted">Using saved rates: Air (<span id="lblAirRate">0</span>/g) | Sea (<span id="lblSeaRate">0</span>/g)</small>
+
+          <h3 class="mt-4">3. Additional Costs (BDT)</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Packaging</label><input type="number" class="cost-input" id="costPack" value="0"></div>
+            <div class="form-group"><label>Courier</label><input type="number" class="cost-input" id="costCourier" value="0"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>FB Ads</label><input type="number" class="cost-input" id="costAds" value="0"></div>
+            <div class="form-group"><label>Customs/Tax</label><input type="number" class="cost-input" id="costCustoms" value="0"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Misc / Overhead</label><input type="number" class="cost-input" id="costMisc" value="0"></div>
+            <div class="form-group"><label>Transaction Fee (%)</label><input type="number" class="cost-input" id="costTxFee" value="0"></div>
+          </div>
+
+          <!-- Dynamic Custom Costs -->
+          <div id="customCostsContainer"></div>
+          <button type="button" id="btnAddCustomCost" class="btn dashed mt-2">+ Add Custom Cost Field</button>
+
+          <h3 class="mt-4">4. Desired Profit Margin</h3>
+          <div class="profit-slider-wrap">
+            <input type="range" id="calcProfitSlider" min="0" max="100" value="30">
+            <div class="profit-input">
+              <input type="number" id="calcProfitInput" value="30"><span>%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OUTPUT COLUMN -->
+        <div class="card output-col">
+          <h3>🧮 Calculation Results</h3>
+          
+          <div class="result-row"><span>Shipping Cost:</span><strong id="resShipping">৳0.00</strong></div>
+          <div class="result-row"><span>Total Additional Costs:</span><strong id="resAddCosts">৳0.00</strong></div>
+          <div class="result-row highlight"><span>Landing Cost:</span><strong id="resLanding">৳0.00</strong></div>
+          <div class="result-row"><span>Total Cost (with Ads/Tx):</span><strong id="resTotal">৳0.00</strong></div>
+          <div class="result-row profit"><span>Net Profit Amount:</span><strong id="resProfit">৳0.00</strong></div>
+          <div class="result-row"><span>Profit Margin:</span><strong id="resMargin">0.00%</strong></div>
+
+          <div class="selling-box">
+            <p>Raw Selling Price</p>
+            <h2 id="resSelling">৳0.00</h2>
+          </div>
+
+          <div class="smart-price-section">
+            <h4>✨ Smart Price Suggestions</h4>
+            <p class="text-muted small">Psychological price points tailored for eCommerce:</p>
+            <div id="smartPriceTags" class="tag-grid"></div>
+          </div>
+
+          <div class="action-buttons mt-4">
+            <button id="btnSaveDb" class="btn primary full">💾 Save to Product Database</button>
+            <button id="btnCopySummary" class="btn secondary full mt-2">📋 Copy Pricing Summary</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVERSE CALCULATOR TAB -->
+    <section id="tab-reverse" class="tab-content">
+      <header class="top-bar"><h1>🔄 Reverse & Goal Calculator</h1></header>
+      <div class="calc-grid">
+        <div class="card">
+          <h3>🎯 Target Selling Price -> Find Profit</h3>
+          <p class="text-muted">Enter the price you want to sell at on your website to check viable profit margins.</p>
+          <div class="form-group mt-4">
+            <label>Target Selling Price (BDT)</label>
+            <input type="number" id="revSellingInput" placeholder="e.g. 1499">
+          </div>
+          <div class="reverse-results mt-4">
+            <div class="result-row"><span>Total Cost Base:</span><strong id="revTotalCost">৳0.00</strong></div>
+            <div class="result-row profit"><span>Resulting Profit:</span><strong id="revProfit">৳0.00</strong></div>
+            <div class="result-row"><span>Net Margin:</span><strong id="revMargin">0.00%</strong></div>
+            <div class="result-row"><span>ROI:</span><strong id="revRoi">0.00%</strong></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🏆 Target Profit Goal -> Find Selling Price</h3>
+          <p class="text-muted">Enter the exact net cash profit you want to pocket per item.</p>
+          <div class="form-group mt-4">
+            <label>Desired Profit Amount (BDT)</label>
+            <input type="number" id="goalProfitInput" placeholder="e.g. 500">
+          </div>
+          <div class="reverse-results mt-4">
+            <div class="selling-box mt-4">
+              <p>Required Selling Price</p>
+              <h2 id="goalSellingResult">৳0.00</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATABASE TAB -->
+    <section id="tab-database" class="tab-content">
+      <header class="top-bar">
+        <h1>💾 Product Database</h1>
+        <div class="header-actions">
+          <input type="text" id="dbSearch" placeholder="🔍 Search products...">
+          <select id="dbCategoryFilter">
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="fashion">Fashion</option>
+            <option value="general">General</option>
+          </select>
+          <button id="btnExportCsv" class="btn secondary small">📊 Export CSV</button>
+          <button id="btnPrintDb" class="btn outline small">🖨️ Print</button>
+        </div>
+      </header>
+
+      <div class="card table-container">
+        <table id="productTable">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>China Cost</th>
+              <th>Landing Cost</th>
+              <th>Selling Price</th>
+              <th>Profit</th>
+              <th>Margin</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+        <div id="dbEmptyState" class="empty-state hidden">
+          <p>No products saved yet. Calculate a product and click "Save to Database"!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS TAB -->
+    <section id="tab-settings" class="tab-content">
+      <header class="top-bar"><h1>⚙️ Global System Settings</h1></header>
+      <div class="card settings-card">
+        <h3>✈️ Shipping Rates & Currency</h3>
+        <div class="form-row mt-2">
+          <div class="form-group"><label>Air Shipping Rate (BDT per gram)</label><input type="number" id="setAirRate" step="0.01"></div>
+          <div class="form-group"><label>Sea Shipping Rate (BDT per gram)</label><input type="number" id="setSeaRate" step="0.01"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Currency Symbol</label><input type="text" id="setCurrency" value="৳"></div>
+          <div class="form-group"><label>RMB to BDT Exchange Rate</label><input type="number" id="setExchange" step="0.1" value="17.5"></div>
+        </div>
+
+        <h3 class="mt-4">📦 Default Cost Presets</h3>
+        <div class="form-row mt-2">
+          <div class="form-group"><label>Default Packaging (BDT)</label><input type="number" id="setDefPack"></div>
+          <div class="form-group"><label>Default Courier (BDT)</label><input type="number" id="setDefCourier"></div>
+          <div class="form-group"><label>Default FB Ads (BDT)</label><input type="number" id="setDefAds"></div>
+        </div>
+
+        <h3 class="mt-4">🏬 Business Branding</h3>
+        <div class="form-row mt-2">
+          <div class="form-group"><label>Business Name</label><input type="text" id="setBizName"></div>
+          <div class="form-group"><label>Logo URL</label><input type="text" id="setLogoUrl"></div>
+        </div>
+
+        <button id="btnSaveSettings" class="btn primary mt-4">💾 Save All Settings</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden">Notification message</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
